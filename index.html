@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>老照片修复与色彩增强 | PhotoRestore</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+	<!-- Tailwind 配置 -->
+	<script>
+		tailwind.config = {
+			theme: {
+				extend: {
+					colors: {
+						primary: '#165DFF',
+						secondary: '#FF7D00',
+						neutral: {
+							100: '#F5F7FA',
+							200: '#E4E7ED',
+							300: '#C0C4CC',
+							400: '#909399',
+							500: '#606266',
+							600: '#303133',
+							700: '#1E1E1E',
+						}
+					},
+					fontFamily: {
+						inter: ['Inter', 'sans-serif'],
+					},
+					boxShadow: {
+						'card': '0 4px 20px rgba(0, 0, 0, 0.08)',
+						'hover': '0 8px 30px rgba(0, 0, 0, 0.12)',
+					}
+				},
+			}
+		}
+	</script>
+
+	<style type="text/tailwindcss">
+		@layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .backdrop-blur-sm {
+        backdrop-filter: blur(4px);
+      }
+      .text-shadow {
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .transition-custom {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    }
+  </style>
+</head>
+
+<body class="font-inter bg-neutral-100 text-neutral-600 min-h-screen flex flex-col">
+	<!-- 导航栏 -->
+	<header class="sticky top-0 z-50 bg-white/80 backdrop-blur-sm shadow-sm transition-custom">
+		<div class="container mx-auto px-4 py-3 flex items-center justify-between">
+			<div class="flex items-center space-x-2">
+				<i class="fa fa-camera-retro text-primary text-2xl"></i>
+				<h1 class="text-xl font-bold text-neutral-700">PhotoRestore</h1>
+			</div>
+
+			<nav class="hidden md:flex items-center space-x-6">
+				<a href="#features" class="text-neutral-600 hover:text-primary transition-custom">功能</a>
+				<a href="#demo" class="text-neutral-600 hover:text-primary transition-custom">演示</a>
+				<a href="#about" class="text-neutral-600 hover:text-primary transition-custom">关于</a>
+			</nav>
+
+			<div class="flex items-center space-x-3">
+				<button
+					class="hidden md:block px-4 py-2 text-primary border border-primary rounded-lg hover:bg-primary/5 transition-custom">
+					文档
+				</button>
+				<button
+					class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-custom shadow-sm">
+					开始使用
+				</button>
+				<button class="md:hidden text-neutral-600">
+					<i class="fa fa-bars text-xl"></i>
+				</button>
+			</div>
+		</div>
+	</header>
+	<!-- 英雄区域 -->
+	<section class="relative bg-gradient-to-br from-primary/10 to-primary/5 py-16 md:py-24 overflow-hidden">
+		<div class="absolute top-0 right-0 w-1/2 h-full opacity-10">
+			<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+				<path fill="#165DFF"
+					d="M40.8,-75.6C53.1,-69.1,63.3,-57.3,70.6,-44.2C77.9,-31.1,82.2,-16.7,81.6,-1.4C81,13.9,75.6,28.8,67.8,40.7C60,52.6,49.9,61.5,38.3,67.8C26.7,74.1,13.3,77.9,-0.1,79.6C-13.5,81.3,-27.1,80.9,-39.4,75.6C-51.7,70.3,-62.8,59.9,-71.3,47.7C-79.8,35.5,-85.8,21.5,-86.6,6.7C-87.4,-8.1,-83,-23.5,-75.1,-35.9C-67.2,-48.3,-55.8,-57.7,-43.1,-64.1C-30.4,-70.5,-15.2,-73.9,0.2,-76.1C15.6,-78.3,31.1,-79.3,40.8,-75.6Z"
+					transform="translate(100 100)" />
+			</svg>
+		</div>
+
+		<div class="container mx-auto px-4 relative z-10">
+			<div class="flex flex-col md:flex-row items-center">
+				<div class="md:w-1/2 mb-10 md:mb-0">
+					<h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold text-neutral-700 leading-tight">
+						让历史照片<br><span class="text-primary">重焕生机</span>
+					</h1>
+					<p class="text-lg text-neutral-500 mt-4 mb-8 max-w-lg">
+						基于先进的深度学习技术，我们的系统可以自动修复老照片的划痕、破损，并为黑白照片智能上色，让珍贵回忆重现光彩。
+					</p>
+					<div class="flex flex-wrap gap-4">
+						<button id="uploadBtn"
+							class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-custom shadow-md flex items-center space-x-2">
+							<i class="fa fa-upload"></i>
+							<span>上传照片</span>
+						</button>
+						<button
+							class="px-6 py-3 border border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50 transition-custom flex items-center space-x-2">
+							<i class="fa fa-play-circle"></i>
+							<span>观看演示</span>
+						</button>
+					</div>
+
+					<div class="mt-10 flex items-center space-x-6">
+						<div class="flex -space-x-2">
+							<img src="https://picsum.photos/id/64/40/40" alt="用户头像"
+								class="w-10 h-10 rounded-full border-2 border-white">
+							<img src="https://picsum.photos/id/65/40/40" alt="用户头像"
+								class="w-10 h-10 rounded-full border-2 border-white">
+							<img src="https://picsum.photos/id/66/40/40" alt="用户头像"
+								class="w-10 h-10 rounded-full border-2 border-white">
+							<div
+								class="w-10 h-10 rounded-full border-2 border-white bg-neutral-100 flex items-center justify-center text-xs font-medium text-neutral-500">
+								500+
+							</div>
+						</div>
+						<div class="text-sm">
+							<div class="flex items-center">
+								<i class="fa fa-star text-yellow-400"></i>
+								<i class="fa fa-star text-yellow-400"></i>
+								<i class="fa fa-star text-yellow-400"></i>
+								<i class="fa fa-star text-yellow-400"></i>
+								<i class="fa fa-star-half-o text-yellow-400"></i>
+								<span class="ml-1 text-neutral-700 font-medium">4.8</span>
+								<span class="text-neutral-400 ml-1">(238条评价)</span>
+							</div>
+							<p class="text-neutral-500">每周处理超过10,000张照片</p>
+						</div>
+					</div>
+				</div>
+
+				<div class="md:w-1/2 relative">
+					<div
+						class="relative bg-white rounded-xl shadow-card overflow-hidden p-2 transform hover:scale-[1.02] transition-custom">
+						<img src="https://picsum.photos/id/116/600/400" alt="老照片修复示例" class="w-full h-auto rounded-lg">
+						<div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+							<h3 class="text-white font-medium">修复前</h3>
+						</div>
+					</div>
+					<div
+						class="absolute -bottom-10 -right-10 bg-white rounded-xl shadow-card overflow-hidden p-2 transform hover:scale-[1.02] transition-custom w-3/4">
+						<img src="https://picsum.photos/id/118/600/400" alt="老照片修复后示例" class="w-full h-auto rounded-lg">
+						<div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+							<h3 class="text-white font-medium">修复后</h3>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+	<!-- 功能区域 -->
+	<section id="features" class="py-16 bg-white">
+		<div class="container mx-auto px-4">
+			<div class="text-center mb-16">
+				<h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-neutral-700">
+					智能老照片修复与增强
+				</h2>
+				<p class="text-neutral-500 mt-4 max-w-2xl mx-auto">
+					我们的深度学习系统能够自动识别并修复照片中的各种损伤，同时为黑白照片提供自然的色彩增强。
+				</p>
+			</div>
+
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+				<!-- 功能卡片1：划痕修复 -->
+				<div class="bg-neutral-50 rounded-xl p-6 shadow-card hover:shadow-hover transition-custom group">
+					<div
+						class="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-custom">
+						<i class="fa fa-paint-brush text-primary text-2xl"></i>
+					</div>
+					<h3 class="text-xl font-semibold text-neutral-700 mb-3">智能划痕修复</h3>
+					<p class="text-neutral-500 mb-4">
+						基于深度学习的划痕检测与修复算法，能够自动识别并去除照片中的划痕、裂纹和污渍，恢复照片的原始质感。
+					</p>
+					<div class="flex items-center text-primary">
+						<span class="font-medium">了解更多</span>
+						<i class="fa fa-arrow-right ml-2"></i>
+					</div>
+				</div>
+
+				<!-- 功能卡片2：色彩增强 -->
+				<div class="bg-neutral-50 rounded-xl p-6 shadow-card hover:shadow-hover transition-custom group">
+					<div
+						class="w-14 h-14 bg-secondary/10 rounded-lg flex items-center justify-center mb-5 group-hover:bg-secondary/20 transition-custom">
+						<i class="fa fa-picture-o text-secondary text-2xl"></i>
+					</div>
+					<h3 class="text-xl font-semibold text-neutral-700 mb-3">智能色彩增强</h3>
+					<p class="text-neutral-500 mb-4">
+						通过语义理解的色彩增强技术，为黑白或褪色照片智能上色，同时保持原始照片的历史感和真实性。
+					</p>
+					<div class="flex items-center text-primary">
+						<span class="font-medium">了解更多</span>
+						<i class="fa fa-arrow-right ml-2"></i>
+					</div>
+				</div>
+
+				<!-- 功能卡片3：细节优化 -->
+				<div class="bg-neutral-50 rounded-xl p-6 shadow-card hover:shadow-hover transition-custom group">
+					<div
+						class="w-14 h-14 bg-green-100 rounded-lg flex items-center justify-center mb-5 group-hover:bg-green-200 transition-custom">
+						<i class="fa fa-magic text-green-600 text-2xl"></i>
+					</div>
+					<h3 class="text-xl font-semibold text-neutral-700 mb-3">细节增强与降噪</h3>
+					<p class="text-neutral-500 mb-4">
+						采用先进的超分辨率技术，增强照片细节，同时去除噪点和颗粒感，使老照片重获清晰质感。
+					</p>
+					<div class="flex items-center text-primary">
+						<span class="font-medium">了解更多</span>
+						<i class="fa fa-arrow-right ml-2"></i>
+					</div>
+				</div>
+			</div>
+
+			<!-- 技术指标 -->
+			<div class="mt-20 grid grid-cols-1 md:grid-cols-4 gap-6">
+				<div class="text-center p-4">
+					<div class="text-4xl font-bold text-primary mb-2" id="counter-accuracy">98%</div>
+					<p class="text-neutral-500">损伤检测准确率</p>
+				</div>
+				<div class="text-center p-4">
+					<div class="text-4xl font-bold text-primary mb-2" id="counter-speed">0.5s</div>
+					<p class="text-neutral-500">单张处理速度</p>
+				</div>
+				<div class="text-center p-4">
+					<div class="text-4xl font-bold text-primary mb-2" id="counter-scenes">10+</div>
+					<p class="text-neutral-500">场景识别类别</p>
+				</div>
+				<div class="text-center p-4">
+					<div class="text-4xl font-bold text-primary mb-2" id="counter-samples">10K+</div>
+					<p class="text-neutral-500">训练样本数量</p>
+				</div>
+			</div>
+		</div>
+	</section>
+	<!-- 演示区域 -->
+	<section id="demo" class="py-16 bg-neutral-50">
+		<div class="container mx-auto px-4">
+			<div class="text-center mb-16">
+				<h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-neutral-700">
+					立即体验
+				</h2>
+				<p class="text-neutral-500 mt-4 max-w-2xl mx-auto">
+					上传您的老照片，体验智能修复与色彩增强的神奇效果。所有处理均在您的浏览器中完成，保护您的隐私。
+				</p>
+			</div>
+
+			<!-- 上传区域 -->
+			<div class="max-w-4xl mx-auto">
+				<div class="bg-white rounded-xl shadow-card p-8">
+					<div class="border-2 border-dashed border-neutral-300 rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-custom"
+						id="uploadArea">
+						<i class="fa fa-cloud-upload text-5xl text-neutral-400 mb-4"></i>
+						<h3 class="text-xl font-medium text-neutral-700 mb-2">上传老照片</h3>
+						<p class="text-neutral-500 mb-4">
+							拖放照片到此处，或点击选择文件。支持JPG、PNG格式，最大10MB。
+						</p>
+						<input type="file" id="fileInput" accept="image/*" class="hidden">
+						<button
+							class="px-5 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-custom shadow-sm"
+							id="selectPhotoBtn">
+							选择照片
+						</button>
+					</div>
+
+					<!-- 处理中状态 -->
+					<div id="processingArea" class="hidden mt-8 text-center">
+						<div
+							class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent">
+						</div>
+						<p class="mt-4 text-neutral-600">正在处理您的照片，请稍候...</p>
+						<div class="mt-4 w-full bg-neutral-200 rounded-full h-2">
+							<div id="progressBar" class="bg-primary h-2 rounded-full" style="width: 0%"></div>
+						</div>
+					</div>
+
+					<!-- 结果展示区域 -->
+					<div id="resultArea" class="hidden mt-8">
+						<h3 class="text-lg font-medium text-neutral-700 mb-4">处理结果</h3>
+
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+							<!-- 原始照片 -->
+							<div class="bg-neutral-50 rounded-lg overflow-hidden shadow-sm">
+								<h4 class="p-3 text-neutral-700 font-medium bg-neutral-100">原始照片</h4>
+								<div class="p-4">
+									<img id="originalImage" src="" alt="原始照片" class="w-full h-auto rounded-md">
+								</div>
+							</div>
+
+							<!-- 修复结果 -->
+							<div class="bg-neutral-50 rounded-lg overflow-hidden shadow-sm">
+								<h4 class="p-3 text-neutral-700 font-medium bg-neutral-100">修复与增强结果</h4>
+								<div class="p-4">
+									<img id="restoredImage" src="" alt="修复后照片" class="w-full h-auto rounded-md">
+								</div>
+							</div>
+						</div>
+
+						<!-- 下载按钮 -->
+						<div class="mt-6 flex justify-end space-x-4">
+							<button id="downloadBtn"
+								class="px-5 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-custom shadow-sm flex items-center space-x-2">
+								<i class="fa fa-download"></i>
+								<span>下载结果</span>
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+	<!-- 关于区域 -->
+	<section id="about" class="py-16 bg-white">
+		<div class="container mx-auto px-4">
+			<div class="text-center mb-16">
+				<h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-neutral-700">
+					关于我们
+				</h2>
+				<p class="text-neutral-500 mt-4 max-w-2xl mx-auto">
+					PhotoRestore 是一家致力于老照片修复与色彩增强的技术公司。我们利用先进的深度学习技术，帮助用户恢复珍贵回忆。
+				</p>
+			</div>
+
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+				<div class="bg-neutral-50 rounded-xl p-6 shadow-card hover:shadow-hover transition-custom">
+					<h3 class="text-xl font-semibold text-neutral-700 mb-3">我们的使命</h3>
+					<p class="text-neutral-500 mb-4">
+						我们的使命是通过技术创新，让每一张老照片都能重新焕发光彩，成为珍贵的记忆。
+					</p>
+				</div>
+
+				<div class="bg-neutral-50 rounded-xl p-6 shadow-card hover:shadow-hover transition-custom">
+					<h3 class="text-xl font-semibold text-neutral-700 mb-3">我们的团队</h3>
+					<p class="text-neutral-500 mb-4">
+						我们的团队由一群充满激情的工程师和设计师组成，致力于提供最优质的服务。
+					</p>
+				</div>
+			</div>
+		</div>
+	</section>
+	<!-- 联系区域 -->
+	<footer class="py-8 bg-neutral-100">
+		<div class="container mx-auto px-4 text-center">
+			<p class="text-neutral-500">
+				&copy; 2023 PhotoRestore. All rights reserved.
+			</p>
+		</div>
+	</footer>
+</body>
+
+</html>
